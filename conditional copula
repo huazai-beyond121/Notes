@@ -1,0 +1,53 @@
+#https://stats.stackexchange.com/questions/239820/sampling-from-copula-given-a-particular-value-of-marginal
+
+Ask
+###
+I am working in the bivariate case with copulas as follows: 
+I have two marginal Gamma distributions f1=Ga(α1,1)and f2=Ga(α2,1) that are bound by a copula Frank copula C, with parameter 10. 
+Assume now, that I observe a value from f1=5.
+The question: How can I obtain a value for f2, assuming that f1,f2 admit the copula C?
+Initially I though it was a matter of conditinal probability with copulas as in this question, but I am not convinced about my approach. 
+I tried with cCopula, but I am not sure I am on the right path. Any code sample would be highly appreciated. 
+###
+###
+Answer:
+
+Your question is somewhat related as both are based on conditional probabilities and thus partial derivatives of copulas. 
+However, the sampling cannot easily be obtained from the single density values, 
+but from the conditional distribution function F(y|x)=∂C(F1(x),F2(y))/∂F1(x). For ease of notation, let us only look at the copula part.
+The strategy I would suggest is to use the general sampling scheme from a copula C(u,v) 
+(going back to the univariate probability integral transform) where one takes two independent random samples u and y of the same length f
+rom a uniform distribution U(0,1), then:v=(∂C/∂u|u=u)−1(y)
+In your case, you do not want to obtain a sample for u and v following C, but just a sample of v, given a particular value of u. 
+Hence, you do not sample a vector u, but just fix it at your desired value and sample a vector y 
+that is used in the inversion of the partial derivative of the copula as in the general case above.
+
+An approach in R could look like:
+
+library(copula)
+library(VineCopula)
+library(spcopula)
+
+cop <- tawnT1Copula(c(3, 0.7))
+
+# easy bivariate sampling
+plot(rCopula(500, cop), asp=1)
+
+# step-wise
+u <- runif(500)
+y <- runif(500)
+
+plot(u, invdduCopula(u, cop, y), asp=1)
+
+# conditional on u=0.3
+u <- rep(0.3, 500)
+y <- runif(500)
+hist(invdduCopula(u, cop, y), main="Sample of v | u = 0.3")
+
+# conditional on u=0.7
+u <- rep(0.7, 500)
+y <- runif(500)
+
+hist(invdduCopula(u, cop, y), main="Sample of v | u = 0.7")
+
+###
